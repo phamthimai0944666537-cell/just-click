@@ -1,384 +1,156 @@
-            <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Clicker V4: Ultimate Expansion</title>
+    <title>Super Clicker V5: Ultimate Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        :root {
-            --primary: #ff4757;
-            --secondary: #2ed573;
-            --dark: #1e272e;
-            --glass: rgba(15, 20, 25, 0.75);
-            --text: #ffffff;
-        }
-        body {
-            margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f172a, #1e1b4b); color: var(--text);
-            display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; overflow: hidden;
-        }
-        .game-wrapper {
-            display: grid; grid-template-columns: 280px 1fr 320px; gap: 20px;
-            width: 96vw; max-width: 1450px; height: 92vh;
-        }
-        .panel {
-            background: var(--glass); border-radius: 16px; padding: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
-            overflow-y: auto; display: flex; flex-direction: column; gap: 15px;
-        }
+        :root { --primary: #ff4757; --glass: rgba(15, 20, 25, 0.8); }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .game-wrapper { display: grid; grid-template-columns: 280px 1fr 320px; gap: 20px; width: 95vw; max-width: 1400px; height: 90vh; }
+        .panel { background: var(--glass); border-radius: 16px; padding: 20px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); }
+        h3 { margin: 0 0 10px 0; border-bottom: 1px solid #444; padding-bottom: 5px; color: #a5b4fc; }
         
-        /* Tiêu đề & Nhãn */
-        h3 { margin: 0 0 5px 0; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px; font-size: 1.1rem; color: #a5b4fc; }
+        /* Center Area */
+        .center-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #main-btn { width: 200px; height: 200px; border-radius: 50%; font-size: 4rem; cursor: pointer; background: radial-gradient(circle, #f43f5e, #be123c); display: flex; align-items: center; justify-content: center; transition: 0.1s; }
+        #main-btn:active { transform: scale(0.9); }
         
-        /* Cột trái: Thống kê & Cổ vật */
-        .artifact-card {
-            background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3);
-            border-radius: 8px; padding: 10px; font-size: 0.85rem; margin-bottom: 8px;
-        }
-        .artifact-card b { color: #facc15; }
-
-        /* Cột giữa: Khu vực Click & Sự kiện */
-        .center-panel { align-items: center; justify-content: space-between; text-align: center; }
-        .score-box { margin-top: 10px; }
-        .score-val { font-size: 3.5rem; font-weight: 900; color: #facc15; text-shadow: 0 0 20px rgba(250, 204, 21, 0.4); }
+        /* Frenzy & Boss */
+        #frenzy-bar { width: 200px; height: 10px; background: #333; border-radius: 5px; margin: 10px 0; overflow: hidden; }
+        #frenzy-fill { height: 100%; width: 0%; background: #fbbf24; }
+        #boss-area { display: none; text-align: center; background: rgba(255,0,0,0.2); padding: 20px; border-radius: 10px; }
         
-        #main-btn {
-            width: 210px; height: 210px; border-radius: 50%; font-size: 4.5rem;
-            background: radial-gradient(circle, #f43f5e, #be123c);
-            border: 6px solid rgba(255,255,255,0.25); cursor: pointer;
-            box-shadow: 0 15px 35px rgba(244, 63, 94, 0.4); display: flex; justify-content: center; align-items: center;
-            transition: transform 0.05s, box-shadow 0.05s; user-select: none; z-index: 10;
-        }
-        #main-btn:active { transform: scale(0.92); box-shadow: 0 5px 15px rgba(244, 63, 94, 0.4); }
-
-        /* Sự kiện thế giới banner */
-        #event-banner {
-            background: linear-gradient(90deg, #7c3aed, #db2777); padding: 10px; border-radius: 8px;
-            font-weight: bold; font-size: 0.95krem; display: none; animation: pulse 1.5s infinite;
-        }
-
-        /* Cột phải: Shop Tòa nhà & Tính năng */
-        .shop-btn {
-            width: 100%; padding: 12px 15px; border-radius: 10px; border: none;
-            background: rgba(255,255,255,0.07); color: white; cursor: pointer; display: flex;
-            justify-content: space-between; align-items: center; font-weight: bold; transition: 0.2s;
-            border: 1px solid rgba(255,255,255,0.05); text-align: left;
-        }
-        .shop-btn:hover:not(:disabled) { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
-        .shop-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-        .shop-cost { color: #facc15; font-size: 0.85rem; }
-
-        .action-container { display: flex; gap: 8px; }
-        .action-btn {
-            flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.2s;
-        }
-        .action-btn.gacha { background: linear-gradient(45deg, #8b5cf6, #ec4899); }
-        .action-btn.prestige { background: linear-gradient(45deg, #06b6d4, #3b82f6); display: none; }
-        .action-btn:hover { opacity: 0.9; transform: scale(1.02); }
-
-        /* Toast thông báo */
-        .toast {
-            position: fixed; bottom: 20px; right: 20px; background: #10b981; color: white;
-            padding: 12px 20px; border-radius: 8px; z-index: 1000; font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); animation: slideIn 0.3s ease-out;
-        }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-110px); opacity: 0; } }
-        @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; transform: scale(1.02); } 100% { opacity: 0.8; } }
+        /* Shop & Artifacts */
+        .shop-btn { width: 100%; padding: 10px; margin-bottom: 5px; background: rgba(255,255,255,0.05); border: none; color: white; cursor: pointer; border-radius: 8px; display: flex; justify-content: space-between; }
+        .shop-btn:hover { background: rgba(255,255,255,0.1); }
+        .artifact-card { background: rgba(255,215,0,0.1); padding: 8px; margin-bottom: 5px; font-size: 0.8rem; border-radius: 5px; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #10b981; padding: 15px; border-radius: 8px; z-index: 1000; }
     </style>
 </head>
 <body>
 
 <div class="game-wrapper">
-    <!-- CỘT TRÁI: THÔNG SỐ & CỔ VẬT -->
     <div class="panel">
-        <h3>📊 Thông số Đế chế</h3>
-        <div id="stats-info" style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6;"></div>
-        
-        <h3>🏺 Cổ vật Sở hữu (<span id="artifact-count">0</span>)</h3>
-        <div id="artifact-list" style="flex: 1; overflow-y: auto;">
-            <div style="color: #64748b; font-style: italic; font-size: 0.85rem;">Chưa có cổ vật nào. Hãy mở rương hoặc đánh Boss để tìm kiếm!</div>
-        </div>
-        
-        <button id="reset-btn" style="background: none; border: 1px solid #ef4444; color: #ef4444; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold;">Xóa dữ liệu</button>
+        <h3>🏆 Xếp hạng & Cổ vật</h3>
+        <div id="leaderboard" style="font-size: 0.8rem;"></div>
+        <div id="artifact-list" style="margin-top:20px;"></div>
     </div>
 
-    <!-- CỘT GIỮA: KHU VỰC CLICK CHÍNH & SỰ KIỆN -->
     <div class="panel center-panel">
-        <div id="event-banner">🌍 Sự kiện đang diễn ra: Không có</div>
+        <div id="event-banner" style="color: #fbbf24; margin-bottom: 10px; font-weight: bold; display: none;"></div>
+        <div id="score" style="font-size: 3rem; font-weight: bold;">0</div>
         
-        <div class="score-box">
-            <div style="font-size: 1.1rem; color: #94a3b8;">Tổng tài nguyên</div>
-            <div class="score-val" id="score">0</div>
-            <div id="prestige-display" style="color: #38bdf8; font-weight: bold; font-size: 0.95rem;"></div>
+        <div id="frenzy-bar"><div id="frenzy-fill"></div></div>
+        
+        <div id="main-btn">🪨</div>
+        
+        <div id="boss-area">
+            <h3>🔥 BOSS ĐANG TẤN CÔNG!</h3>
+            <button id="boss-btn" style="font-size: 3rem; cursor: crosshair;">🐲</button>
+            <div id="boss-hp" style="width: 100%; height: 10px; background: #333;"><div id="boss-hp-fill" style="height:100%; background:red; width:100%;"></div></div>
         </div>
-
-        <div id="main-btn">🪙</div>
-
-        <div style="font-size: 0.85rem; color: #64748b;">Mẹo: Click liên tục để tích lũy tài nguyên và mua các tòa nhà sản xuất tự động bên phải.</div>
     </div>
 
-    <!-- CỘT PHẢI: TÒA NHÀ & CỬA HÀNG -->
     <div class="panel">
-        <h3>🏗️ Tòa nhà Sản xuất</h3>
-        <div id="buildings-container">
-            <!-- Sẽ được render tự động qua JS -->
-        </div>
-
-        <h3>🎁 Tiện ích & Vận may</h3>
-        <div class="action-container">
-            <button class="action-btn gacha" id="btn-gacha">🎁 Mở Rương (1.5k)</button>
-            <button class="action-btn prestige" id="btn-prestige">🌌 Chuyển sinh</button>
-        </div>
+        <h3>🏗️ Tòa nhà (Auto)</h3>
+        <div id="buildings-container"></div>
+        <h3>🎲 Tính năng</h3>
+        <button class="shop-btn" id="btn-gacha">🎁 Mở Rương (1.5k)</button>
+        <button class="shop-btn" id="btn-summon-boss">⚔️ Gọi Boss (5k)</button>
+        <button class="shop-btn" id="btn-prestige" style="color: #38bdf8;">🌌 Chuyển sinh (500k)</button>
     </div>
 </div>
 
 <script>
-    // --- ÂM THANH WEB AUDIO API ---
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const actx = new AudioContext();
-    function playSound(type) {
-        if(actx.state === 'suspended') actx.resume();
-        const osc = actx.createOscillator();
-        const gain = actx.createGain();
-        osc.connect(gain); gain.connect(actx.destination);
-        if(type === 'click') { 
-            osc.type = 'sine'; osc.frequency.setValueAtTime(600, actx.currentTime); 
-            osc.frequency.exponentialRampToValueAtTime(100, actx.currentTime + 0.08); 
-            gain.gain.setValueAtTime(0.2, actx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.08); 
-            osc.start(); osc.stop(actx.currentTime + 0.08); 
-        } else if(type === 'buy') { 
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(300, actx.currentTime); 
-            osc.frequency.setValueAtTime(500, actx.currentTime + 0.1); 
-            gain.gain.setValueAtTime(0.15, actx.currentTime); gain.gain.linearRampToValueAtTime(0, actx.currentTime + 0.2); 
-            osc.start(); osc.stop(actx.currentTime + 0.2); 
-        }
-    }
-
-    // --- DỮ LIỆU TRÒ CHƠI ---
+    // --- STATE ---
     let state = {
-        score: parseFloat(localStorage.getItem("v4_score")) || 0,
-        prestigeMult: parseFloat(localStorage.getItem("v4_prestige")) || 1,
-        artifacts: JSON.parse(localStorage.getItem("v4_artifacts")) || [],
-        buildings: JSON.parse(localStorage.getItem("v4_buildings")) || {
-            miner: { count: 0, baseCost: 50, cps: 1, name: "⛏️ Thợ mỏ tự động" },
-            factory: { count: 0, baseCost: 500, cps: 8, name: "🏭 Xưởng cơ khí" },
-            quantum: { count: 0, baseCost: 5000, cps: 45, name: "⚛️ Lõi lượng tử" },
-            ai: { count: 0, baseCost: 35000, cps: 200, name: "🤖 Trí tuệ nhân tạo" }
-        }
+        score: parseFloat(localStorage.getItem("v5_score")) || 0,
+        prestigeMult: parseFloat(localStorage.getItem("v5_prestige")) || 1,
+        buildings: JSON.parse(localStorage.getItem("v5_buildings")) || {
+            miner: { count: 0, cost: 50, cps: 1, name: "⛏️ Thợ mỏ" },
+            factory: { count: 0, cost: 500, cps: 8, name: "🏭 Xưởng" }
+        },
+        artifacts: JSON.parse(localStorage.getItem("v5_artifacts")) || [],
+        combo: 0
     };
 
-    // Hệ thống Cổ vật có thể nhận được
-    const artifactPool = [
-        { id: "clock", name: "⏱️ Đồng hồ ngưng đọng", desc: "Tăng +20% hiệu suất toàn bộ Tòa nhà", effect: () => 1.2 },
-        { id: "glove", name: "⚡ Găng tay thần tốc", desc: "Tăng gấp đôi lực click cơ bản", effect: () => 2.0 },
-        { id: "gem", name: "💎 Ấn ngọc hoàng kim", desc: "Giảm 15% giá mua các tòa nhà", effect: () => 0.85 }
-    ];
+    // --- CORE LOOP ---
+    setInterval(() => {
+        let cps = 0;
+        for(let key in state.buildings) cps += state.buildings[key].count * state.buildings[key].cps;
+        state.score += (cps * state.prestigeMult) / 10;
+        updateUI();
+    }, 100);
 
-    // Trạng thái sự kiện thế giới
-    let currentEvent = null;
-    let eventTimeLeft = 0;
-
-    const elScore = document.getElementById('score');
-    const elMainBtn = document.getElementById('main-btn');
-    const elStatsInfo = document.getElementById('stats-info');
-
-    // --- TÍNH TOÁN CHỈ SỐ DỰA TRÊN CỔ VẬT ---
-    function getArtifactBonus(id) {
-        let found = state.artifacts.find(a => a.id === id);
-        if (!found) return id === 'gem' ? 1.0 : (id === 'clock' ? 1.0 : 1.0);
-        return found.multiplier || (id === 'gem' ? 0.85 : 1.2);
-    }
-
-    function getTotalCPS() {
-        let rawCPS = 0;
-        for (let key in state.buildings) {
-            rawCPS += state.buildings[key].count * state.buildings[key].cps;
-        }
-        let clockMult = state.artifacts.some(a => a.id === 'clock') ? 1.2 : 1.0;
-        let eventMult = (currentEvent && currentEvent.type === 'boostCPS') ? 2.0 : 1.0;
-        return rawCPS * clockMult * eventMult * state.prestigeMult;
-    }
-
-    function getClickPower() {
-        let base = 1;
-        if (state.artifacts.some(a => a.id === 'glove')) base *= 2;
-        let eventMult = (currentEvent && currentEvent.type === 'boostClick') ? 3.0 : 1.0;
-        return base * eventMult * state.prestigeMult;
-    }
-
-    // --- CẬP NHẬT GIAO DIỆN ---
-    function updateUI() {
-        elScore.innerText = Math.floor(state.score).toLocaleString();
-        
-        let cps = getTotalCPS();
-        elStatsInfo.innerHTML = `Lực Click: ${getClickPower()}<br>Thu nhập thụ động: ${cps.toFixed(1)}/giây<br>Hệ số Chuyển sinh: x${state.prestigeMult}`;
-
-        document.getElementById('prestige-display').innerText = state.prestigeMult > 1 ? `Cấp độ Chuyển sinh: x${state.prestigeMult}` : '';
-
-        // Render Buildings
-        let buildingsHTML = '';
-        for (let key in state.buildings) {
-            let b = state.buildings[key];
-            let gemMult = state.artifacts.some(a => a.id === 'gem') ? 0.85 : 1.0;
-            let eventCostMult = (currentEvent && currentEvent.type === 'cheapShop') ? 0.5 : 1.0;
-            let cost = Math.floor(b.baseCost * Math.pow(1.15, b.count) * gemMult * eventCostMult);
-            
-            let canBuy = state.score >= cost;
-            buildingsHTML += `
-                <button class="shop-btn" onclick="buyBuilding('${key}')" ${!canBuy ? 'disabled' : ''}>
-                    <span>${b.name} (${b.count})<br><small style="color:#94a3b8">+${b.cps}/s</small></span>
-                    <span class="shop-cost">${cost.toLocaleString()} 🪙</span>
-                </button>
-            `;
-        }
-        document.getElementById('buildings-container').innerHTML = buildingsHTML;
-
-        // Render Artifacts
-        document.getElementById('artifact-count').innerText = state.artifacts.length;
-        if (state.artifacts.length > 0) {
-            let artHTML = '';
-            state.artifacts.forEach(art => {
-                artHTML += `<div class="artifact-card"><b>${art.name}</b><br>${art.desc}</div>`;
-            });
-            document.getElementById('artifact-list').innerHTML = artHTML;
-        }
-
-        // Nút Chuyển sinh
-        let prestigeBtn = document.getElementById('btn-prestige');
-        if (state.score >= 500000 || state.prestigeMult > 1) prestigeBtn.style.display = 'block';
-
-        // Lưu trữ
-        localStorage.setItem("v4_score", state.score);
-        localStorage.setItem("v4_prestige", state.prestigeMult);
-        localStorage.setItem("v4_artifacts", JSON.stringify(state.artifacts));
-        localStorage.setItem("v4_buildings", JSON.stringify(state.buildings));
-    }
-
-    // --- MUA TÒA NHÀ ---
-    window.buyBuilding = function(key) {
-        let b = state.buildings[key];
-        let gemMult = state.artifacts.some(a => a.id === 'gem') ? 0.85 : 1.0;
-        let eventCostMult = (currentEvent && currentEvent.type === 'cheapShop') ? 0.5 : 1.0;
-        let cost = Math.floor(b.baseCost * Math.pow(1.15, b.count) * gemMult * eventCostMult);
-
-        if (state.score >= cost) {
-            state.score -= cost;
-            b.count++;
-            playSound('buy');
-            updateUI();
-        }
-    };
-
-    // --- CLICK CHÍNH ---
-    elMainBtn.onmousedown = (e) => {
-        playSound('click');
-        let power = getClickPower();
-        state.score += power;
-        
-        spawnFloatingText(`+${power}`, e.clientX, e.clientY);
+    // --- CLICK ---
+    document.getElementById('main-btn').onclick = (e) => {
+        state.score += (1 * state.prestigeMult);
+        state.combo += 2;
+        if(state.combo > 100) state.combo = 100;
+        document.getElementById('frenzy-fill').style.width = state.combo + "%";
         updateUI();
     };
 
-    function spawnFloatingText(text, x, y) {
-        const el = document.createElement("div");
-        el.innerText = text;
-        el.style.position = "absolute"; el.style.left = `${x}px`; el.style.top = `${y}px`;
-        el.style.color = "#facc15"; el.style.fontSize = "26px"; el.style.fontWeight = "bold";
-        el.style.textShadow = "0 2px 4px rgba(0,0,0,0.5)"; el.style.pointerEvents = "none";
-        el.style.zIndex = "9999"; el.style.animation = "floatUp 0.8s forwards";
-        document.body.appendChild(el);
-        setTimeout(() => el.remove(), 800);
+    // --- BUILDINGS ---
+    function renderBuildings() {
+        let html = '';
+        for(let key in state.buildings) {
+            let b = state.buildings[key];
+            html += `<button class="shop-btn" onclick="buyBuilding('${key}')">${b.name} (${b.count}) <br> Giá: ${Math.floor(b.cost)}</button>`;
+        }
+        document.getElementById('buildings-container').innerHTML = html;
     }
-
-    // --- TÍNH NĂNG GACHA CỔ VẬT ---
-    document.getElementById('btn-gacha').onclick = () => {
-        if (state.score >= 1500) {
-            state.score -= 1500;
-            playSound('buy');
-            
-            // Random nhận cổ vật chưa có
-            let available = artifactPool.filter(a => !state.artifacts.some(owned => owned.id === a.id));
-            if (available.length > 0) {
-                let reward = available[Math.floor(Math.random() * available.length)];
-                state.artifacts.push(reward);
-                showToast(`🎉 Chúc mừng! Nhận được cổ vật: ${reward.name}`);
-                confetti({ particleCount: 100, spread: 60, origin: { y: 0.6 } });
-            } else {
-                state.score += 3000; // Hoàn tiền gấp đôi nếu đã sưu tầm hết
-                showToast("🎁 Bạn đã sở hữu tất cả Cổ vật! Nhận thưởng hoàn vốn 3,000 điểm.");
-            }
+    
+    window.buyBuilding = (key) => {
+        if(state.score >= state.buildings[key].cost) {
+            state.score -= state.buildings[key].cost;
+            state.buildings[key].count++;
+            state.buildings[key].cost *= 1.2;
             updateUI();
-        } else {
-            showToast("❌ Không đủ 1,500 điểm để mở rương!");
         }
     };
 
-    // --- HỆ THỐNG SỰ KIỆN THẾ GIỚI (WORLD EVENTS) ---
-    const possibleEvents = [
-        { type: 'boostCPS', name: '⚡ Cơn sốt năng lượng: Thu nhập Tòa nhà x2 trong 30s!' },
-        { type: 'boostClick', name: '🔥 Cuồng phong ý chí: Sức mạnh Click x3 trong 30s!' },
-        { type: 'cheapShop', name: '🏷️ Đợt xả hàng lớn: Giảm 50% giá Tòa nhà trong 30s!' }
-    ];
+    // --- BOSS FIGHT ---
+    let bossHp = 1000;
+    document.getElementById('btn-summon-boss').onclick = () => {
+        if(state.score >= 5000) {
+            state.score -= 5000;
+            document.getElementById('main-btn').style.display = 'none';
+            document.getElementById('boss-area').style.display = 'block';
+            bossHp = 1000;
+        }
+    };
+    
+    document.getElementById('boss-btn').onclick = () => {
+        bossHp -= 100;
+        document.getElementById('boss-hp-fill').style.width = (bossHp/10) + "%";
+        if(bossHp <= 0) {
+            state.score += 20000;
+            document.getElementById('main-btn').style.display = 'flex';
+            document.getElementById('boss-area').style.display = 'none';
+            alert("Thắng boss! Nhận 20k điểm.");
+        }
+    };
 
-    function triggerWorldEvent() {
-        if (currentEvent) return;
-        currentEvent = possibleEvents[Math.floor(Math.random() * possibleEvents.length)];
-        eventTimeLeft = 30;
-        
-        const banner = document.getElementById('event-banner');
-        banner.style.display = 'block';
-        banner.innerText = `🌍 Sự kiện: ${currentEvent.name}`;
-        showToast(`🌍 Sự kiện thế giới xuất hiện: ${currentEvent.name}`);
-
-        let eventTimer = setInterval(() => {
-            eventTimeLeft--;
-            if (eventTimeLeft <= 0) {
-                clearInterval(eventTimer);
-                currentEvent = null;
-                banner.style.display = 'none';
-                showToast("🌍 Sự kiện thế giới đã kết thúc.");
-            }
-        }, 1000);
-    }
-    // Kích hoạt sự kiện ngẫu nhiên mỗi 90 giây
-    setInterval(triggerWorldEvent, 90000);
-
-    // --- CHUYỂN SINH (PRESTIGE) ---
+    // --- PRESTIGE ---
     document.getElementById('btn-prestige').onclick = () => {
-        if (state.score >= 500000) {
-            if (confirm("Chuyển sinh sẽ reset tài nguyên và tòa nhà, nhưng giữ lại Cổ vật và nhân đôi hệ số vĩnh viễn! Tiếp tục?")) {
-                state.score = 0;
-                state.prestigeMult *= 2;
-                for (let key in state.buildings) state.buildings[key].count = 0;
-                updateUI();
-                showToast("🌌 Chuyển sinh thành công! Bắt đầu kỷ nguyên mới.");
-            }
-        }
-    };
-
-    function showToast(msg) {
-        const toast = document.createElement("div"); toast.className = "toast";
-        toast.innerText = msg; document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3500);
-    }
-
-    document.getElementById('reset-btn').onclick = () => {
-        if (confirm("Bạn có chắc chắn muốn xóa toàn bộ dữ liệu game không?")) {
-            localStorage.clear(); location.reload();
-        }
-    };
-
-    // --- VÒNG LẶP CHÍNH (GAME LOOP) ---
-    setInterval(() => {
-        let cps = getTotalCPS();
-        if (cps > 0) {
-            state.score += cps / 10; // Cập nhật mỗi 100ms cho mượt
+        if(state.score >= 500000) {
+            state.score = 0;
+            state.prestigeMult *= 2;
+            for(let key in state.buildings) state.buildings[key].count = 0;
             updateUI();
         }
-    }, 100);
+    };
+
+    // --- UPDATE UI ---
+    function updateUI() {
+        document.getElementById('score').innerText = Math.floor(state.score).toLocaleString();
+        renderBuildings();
+        localStorage.setItem("v5_score", state.score);
+        localStorage.setItem("v5_prestige", state.prestigeMult);
+        localStorage.setItem("v5_buildings", JSON.stringify(state.buildings));
+    }
 
     updateUI();
 </script>
