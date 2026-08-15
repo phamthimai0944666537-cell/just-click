@@ -1,0 +1,83 @@
+<style>
+button {
+  width: 20vw;
+  height: 20vw;
+  border-radius: 50%;
+  border: none;
+  background: red;
+  color: white; 
+  font-size: 3vw;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+button:active {
+  transform: scale(1.05);
+}
+button:active {
+  transform: scale(0.95);
+  box-shadow: 5px 10px rgba(0,0,0,0.2);
+}
+</style>
+<style>
+body {
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+height: 100vh;
+margin: 0;
+}
+</style>
+<button id="btn">0</button>
+<script>
+let score = localStorage.getItem("score") || 0;
+const btn = document.getElementById("btn");
+
+btn.innerText = score;
+
+btn.onclick = () => {
+  const sound = new Audio("click.mp3.mp3");
+  sound.currentTime = 0;
+  sound.play().catch(() => {});
+
+  score++;
+  btn.innerText = score;
+  localStorage.setItem("score", score);
+
+  const plusOne = document.createElement("div");
+  plusOne.innerText = "+1";
+
+  const rect = btn.getBoundingClientRect();
+
+  const x = Math.random() * (rect.width - 50) + 25;
+  const y = Math.random() * (rect.height - 40) + 20;
+
+  plusOne.style.position = "fixed";
+  plusOne.style.left = rect.left + x + "px";
+  plusOne.style.top = rect.top + y + "px";
+  plusOne.style.transform = "translate(-50%, -50%)";
+  plusOne.style.color = "white";
+  plusOne.style.fontSize = "30px";
+  plusOne.style.fontWeight = "900";
+  plusOne.style.textShadow = "0 2px 6px rgba(0,0,0,0.8)";
+  plusOne.style.pointerEvents = "none";
+  plusOne.style.zIndex = "9999";
+  plusOne.style.transition = "top 1.2s ease-out, opacity 1.2s ease-out";
+
+  document.body.appendChild(plusOne);
+
+  setTimeout(() => {
+    plusOne.style.top = rect.top + y - 250 + "px";
+    plusOne.style.opacity = "0";
+  }, 20);
+
+  setTimeout(() => {
+    plusOne.remove();
+  }, 1220);
+
+  if (score == 100) {
+    alert("🏆 Achievement: Seems like you like this button");
+  }
+};
+</script>
